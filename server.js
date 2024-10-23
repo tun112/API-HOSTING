@@ -1,15 +1,24 @@
 const express = require('express');
-const cors = require('cors'); // Include cors
+const cors = require('cors');
+
 const app = express();
-const port = 10000;
+const PORT = process.env.PORT || 10000;
 
-// Use cors middleware
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-app.get('/api/hello', (req, res) => {
-    res.send('Hello, this is your server responding!');
+// Define a route for the root URL
+app.get('/', (req, res) => {
+    res.send('Welcome to the API!'); // This will respond to GET requests at the root URL
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// Define a route for your specific API endpoint
+app.get('/api/hello', (req, res) => {
+    res.json({ message: 'Hello from the server!' });
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
