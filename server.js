@@ -11,13 +11,39 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json()); // Middleware to parse JSON request bodies
 
+// JSON file path
+const jsonFilePath = path.join(__dirname, 'texts.json');
+
+// Function to load messages from the JSON file
+const loadMessagesFromFile = () => {
+    try {
+        const data = fs.readFileSync(jsonFilePath, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error('Error reading the JSON file:', err);
+        return [];
+    }
+};
+
+// Function to save messages to the JSON file
+const saveMessagesToFile = (messages) => {
+    try {
+        fs.writeFileSync(jsonFilePath, JSON.stringify(messages, null, 2));
+        console.log('Messages saved to file');
+    } catch (err) {
+        console.error('Error saving the JSON file:', err);
+    }
+};
+
+// Load existing messages from the file into memory when the server starts
+let messages = loadMessagesFromFile();
+
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Route to return the latest 10 submitted texts
 app.get('/api/texts', (req, res) => {
-    const texts = JSON.parse(fs.readFileSync('texts.json', 'utf8'));
-    res.json(texts.slice(-10)); // Return only the latest 10 messages
+    res.json(messages.slice(-10)); // Return only the latest 10 messages
 });
 
 // Create a WebSocket server
@@ -28,8 +54,7 @@ wss.on('connection', (ws) => {
     console.log('New client connected');
 
     // Send the current texts to the new client
-    const texts = JSON.parse(fs.readFileSync('texts.json', 'utf8'));
-    ws.send(JSON.stringify(texts.slice(-10))); // Send the latest 10 messages to the new client
+    ws.send(JSON.stringify(messages.slice(-10))); // Send the latest 10 messages to the new client
 
     // Handle disconnection
     ws.on('close', () => {
@@ -53,17 +78,16 @@ app.post('/api/submit', (req, res) => {
         return res.status(400).json({ message: 'Text is required' });
     }
 
-    // Read existing texts
-    const texts = JSON.parse(fs.readFileSync('texts.json', 'utf8'));
-    texts.push(text);
+    // Add the new message to the in-memory array
+    messages.push(text);
 
-    // Save updated texts to JSON file
-    fs.writeFileSync('texts.json', JSON.stringify(texts, null, 2));
+    // Save messages to the JSON file
+    saveMessagesToFile(messages);
 
     // Notify all connected WebSocket clients about the new message
     wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(texts.slice(-10))); // Send the latest 10 messages to all clients
+            client.send(JSON.stringify(messages.slice(-10))); // Send the latest 10 messages to all clients
         }
     });
 
