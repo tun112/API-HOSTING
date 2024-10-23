@@ -1,21 +1,25 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.use(cors()); // Enable CORS for all origins
-app.use(express.json()); // Enable JSON parsing for incoming requests
+// Enable CORS
+app.use(cors());
 
-// Root endpoint
-app.get('/', (req, res) => {
-    res.send('Welcome to the API!');
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Route to return a hello message
+app.get('/api/hello', (req, res) => {
+    console.log('Received request for /api/hello');
+    res.json({ message: 'Hello from the server!' });
 });
 
-// API endpoint that responds to /api/hello
-app.get('/api/hello', (req, res) => {
-    console.log('Received request for /api/hello'); // Debug line
-    res.json({ message: 'Hello from the server!' }); // This will respond with a JSON object
+// Serve index.html for the root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start the server
