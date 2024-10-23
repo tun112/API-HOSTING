@@ -1,26 +1,30 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 
-// Setting the port dynamically for Render, or default to 10000 for local use
+// Middleware to parse JSON data
+app.use(express.json());
+
+// Serve static files (your client HTML)
+app.use(express.static(path.join(__dirname, 'public')));
+
 const PORT = process.env.PORT || 10000;
 
-// Root Route
+// Root Route - Serve the HTML file
 app.get('/', (req, res) => {
-  res.send('Welcome to my API!');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Example API route
-app.get('/api/data', (req, res) => {
-  res.json({ message: 'Hello from the API!' });
+// API Route to handle client messages
+app.post('/api/send-message', (req, res) => {
+  const clientMessage = req.body.message; // Access the message sent from the client
+  console.log('Message from the client:', clientMessage);
+
+  // Respond back to the client with a message
+  res.json({ response: 'Message received: ' + clientMessage });
 });
 
-// Add more routes here as needed
-// For example:
-// app.get('/api/another-endpoint', (req, res) => {
-//   res.json({ message: 'Another endpoint!' });
-// });
-
-// Starting the server
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
