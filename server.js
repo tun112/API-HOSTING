@@ -2,66 +2,70 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const WebSocket = require('ws');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
 // Enable CORS
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // Middleware to parse JSON request bodies
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-let texts = [];
-
-// Load existing texts from texts.json
-const loadTexts = () => {
-    try {
-        const data = fs.readFileSync('texts.json');
-        texts = JSON.parse(data);
-    } catch (error) {
-        console.error('Error reading texts.json:', error);
-        texts = [];
-    }
-};
-
-// Save texts to texts.json
-const saveTexts = () => {
-    fs.writeFileSync('texts.json', JSON.stringify(texts, null, 2));
-};
-
-// Load existing texts on server start
-loadTexts();
-
-// Route to return the latest 10 messages
+// Route to return the latest 10 submitted texts
 app.get('/api/texts', (req, res) => {
-    res.json(texts.slice(-10)); // Return the last 10 messages
+    const texts = JSON.parse(fs.readFileSync('texts.json', 'utf8'));
+    res.json(texts.slice(-10)); // Return only the latest 10 messages
 });
 
-// Route to return all messages
-app.get('/api/all-texts', (req, res) => {
-    res.json(texts); // Return all messages
+// Create a WebSocket server
+const wss = new WebSocket.Server({ noServer: true });
+
+// Handle WebSocket connections
+wss.on('connection', (ws) => {
+    console.log('New client connected');
+
+    // Send the current texts to the new client
+    const texts = JSON.parse(fs.readFileSync('texts.json', 'utf8'));
+    ws.send(JSON.stringify(texts.slice(-10))); // Send the latest 10 messages to the new client
+
+    // Handle disconnection
+    ws.on('close', () => {
+        console.log('Client disconnected');
+    });
 });
 
-// Route to submit a new message
+// Handle upgrade requests to add WebSocket support
+app.server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+}).on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
+});
+
+// Route to handle text submissions
 app.post('/api/submit', (req, res) => {
     const { text } = req.body;
-    if (text) {
-        texts.push(text);
-        saveTexts();
-        res.json({ message: 'Text submitted successfully!' });
-    } else {
-        res.status(400).json({ message: 'Text is required!' });
+    if (!text) {
+        return res.status(400).json({ message: 'Text is required' });
     }
-});
 
-// Serve index.html for the root route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+    // Read existing texts
+    const texts = JSON.parse(fs.readFileSync('texts.json', 'utf8'));
+    texts.push(text);
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    // Save updated texts to JSON file
+    fs.writeFileSync('texts.json', JSON.stringify(texts, null, 2));
+
+    // Notify all connected WebSocket clients about the new message
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(texts.slice(-10))); // Send the latest 10 messages to all clients
+        }
+    });
+
+    res.json({ message: 'Text submitted successfully' });
 });

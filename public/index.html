@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>API Client</title>
     <style>
-      /* Simple style for hiding messages */
-      #oldMessagesContainer {
-        display: none; /* Hide by default */
-      }
+      /* Optional: Add some styling here */
     </style>
   </head>
   <body>
@@ -17,22 +14,11 @@
     <button id="submitText">Submit</button>
     <p id="responseMessage"></p>
 
-    <h2>Submitted Texts:</h2>
+    <h2>Latest Submitted Texts:</h2>
     <ul id="textsList"></ul>
 
-    <!-- Button to see old messages -->
-    <button id="viewOldMessages" style="display: none">
-      View All Messages
-    </button>
-
-    <!-- Container for old messages -->
-    <div id="oldMessagesContainer">
-      <h2>All Submitted Texts:</h2>
-      <ul id="allTextsList"></ul>
-    </div>
-
     <script>
-      // Fetch and display existing texts when the page loads
+      // Function to fetch and display texts
       async function fetchTexts() {
         try {
           const response = await fetch("/api/texts");
@@ -46,12 +32,6 @@
             listItem.textContent = text; // Display each text in the list
             textsList.appendChild(listItem);
           });
-
-          // Show the button if there are more than 10 messages
-          const allResponse = await fetch("/api/all-texts");
-          const allTexts = await allResponse.json();
-          document.getElementById("viewOldMessages").style.display =
-            allTexts.length > 10 ? "block" : "none";
         } catch (error) {
           console.error("Error fetching texts:", error);
         }
@@ -74,7 +54,6 @@
             const data = await response.json();
             document.getElementById("responseMessage").innerText = data.message;
             document.getElementById("inputText").value = ""; // Clear input field
-            fetchTexts(); // Refresh the list after submission
           } catch (error) {
             console.error("Error submitting text:", error);
             document.getElementById("responseMessage").innerText =
@@ -82,39 +61,20 @@
           }
         });
 
-      // Fetch all texts and toggle display
-      document
-        .getElementById("viewOldMessages")
-        .addEventListener("click", async () => {
-          const oldMessagesContainer = document.getElementById(
-            "oldMessagesContainer"
-          );
-          const allTextsList = document.getElementById("allTextsList");
+      // Establish WebSocket connection
+      const socket = new WebSocket(`ws://${window.location.host}`);
 
-          // Check if the container is currently displayed
-          if (oldMessagesContainer.style.display === "none") {
-            try {
-              const response = await fetch("/api/all-texts");
-              if (!response.ok) throw new Error("Network response was not ok");
-              const allTexts = await response.json();
-
-              allTextsList.innerHTML = ""; // Clear the current list
-              allTexts.forEach((text) => {
-                const listItem = document.createElement("li");
-                listItem.textContent = text; // Display each text in the list
-                allTextsList.appendChild(listItem);
-              });
-
-              // Show the old messages
-              oldMessagesContainer.style.display = "block";
-            } catch (error) {
-              console.error("Error fetching all texts:", error);
-            }
-          } else {
-            // Hide the old messages
-            oldMessagesContainer.style.display = "none";
-          }
+      // Listen for messages from the server
+      socket.addEventListener("message", (event) => {
+        const texts = JSON.parse(event.data);
+        const textsList = document.getElementById("textsList");
+        textsList.innerHTML = ""; // Clear the current list
+        texts.forEach((text) => {
+          const listItem = document.createElement("li");
+          listItem.textContent = text; // Display each text in the list
+          textsList.appendChild(listItem);
         });
+      });
 
       // Call fetchTexts on page load to display existing texts
       window.onload = fetchTexts;
