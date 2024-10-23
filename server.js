@@ -1,15 +1,26 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+// Setting the port dynamically for Render, or default to 10000 for local use
+const PORT = process.env.PORT || 10000;
 
-// Importing routes
-const dataRoutes = require('./routes/dataRoutes');
-app.use('/api/data', dataRoutes);
+// Root Route
+app.get('/', (req, res) => {
+  res.send('Welcome to my API!');
+});
 
-// Start the server
+// Example API route
+app.get('/api/data', (req, res) => {
+  res.json({ message: 'Hello from the API!' });
+});
+
+// Add more routes here as needed
+// For example:
+// app.get('/api/another-endpoint', (req, res) => {
+//   res.json({ message: 'Another endpoint!' });
+// });
+
+// Starting the server
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
