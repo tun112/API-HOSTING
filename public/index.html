@@ -4,9 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>API Client</title>
-    <style>
-      /* Optional: Add some styling here */
-    </style>
   </head>
   <body>
     <h1>Welcome to the API Client</h1>
@@ -14,24 +11,52 @@
     <button id="submitText">Submit</button>
     <p id="responseMessage"></p>
 
-    <h2>Latest Submitted Texts:</h2>
+    <h2>Submitted Texts:</h2>
     <ul id="textsList"></ul>
 
+    <!-- Button to toggle older messages -->
+    <button id="toggleOlderMessages" style="display: none">
+      Show Older Messages
+    </button>
+
     <script>
-      // Function to fetch and display texts
+      let textsArray = []; // Store all the texts
+      let showOlderMessages = false; // Control the visibility of older messages
+
+      // Function to update the text list display
+      function updateTextsDisplay() {
+        const textsList = document.getElementById("textsList");
+        textsList.innerHTML = ""; // Clear the current list
+
+        // Show the last 10 texts
+        const start = showOlderMessages
+          ? 0
+          : Math.max(0, textsArray.length - 10);
+        const textsToShow = textsArray.slice(start);
+
+        textsToShow.forEach((text) => {
+          const listItem = document.createElement("li");
+          listItem.textContent = text; // Display each text in the list
+          textsList.appendChild(listItem);
+        });
+
+        // Toggle the visibility of the "Show Older Messages" button if more than 10 messages
+        const toggleButton = document.getElementById("toggleOlderMessages");
+        if (textsArray.length > 10) {
+          toggleButton.style.display = "block";
+        } else {
+          toggleButton.style.display = "none";
+        }
+      }
+
+      // Fetch and display existing texts when the page loads
       async function fetchTexts() {
         try {
           const response = await fetch("/api/texts");
           if (!response.ok) throw new Error("Network response was not ok");
           const texts = await response.json();
-
-          const textsList = document.getElementById("textsList");
-          textsList.innerHTML = ""; // Clear the current list
-          texts.forEach((text) => {
-            const listItem = document.createElement("li");
-            listItem.textContent = text; // Display each text in the list
-            textsList.appendChild(listItem);
-          });
+          textsArray = texts; // Store all texts in textsArray
+          updateTextsDisplay(); // Update the display with the latest texts
         } catch (error) {
           console.error("Error fetching texts:", error);
         }
@@ -54,6 +79,7 @@
             const data = await response.json();
             document.getElementById("responseMessage").innerText = data.message;
             document.getElementById("inputText").value = ""; // Clear input field
+            fetchTexts(); // Refresh the list after submission
           } catch (error) {
             console.error("Error submitting text:", error);
             document.getElementById("responseMessage").innerText =
@@ -61,20 +87,15 @@
           }
         });
 
-      // Establish WebSocket connection
-      const socket = new WebSocket(`ws://${window.location.host}`);
-
-      // Listen for messages from the server
-      socket.addEventListener("message", (event) => {
-        const texts = JSON.parse(event.data);
-        const textsList = document.getElementById("textsList");
-        textsList.innerHTML = ""; // Clear the current list
-        texts.forEach((text) => {
-          const listItem = document.createElement("li");
-          listItem.textContent = text; // Display each text in the list
-          textsList.appendChild(listItem);
+      // Toggle visibility of older messages when the button is clicked
+      document
+        .getElementById("toggleOlderMessages")
+        .addEventListener("click", () => {
+          showOlderMessages = !showOlderMessages; // Toggle the flag
+          document.getElementById("toggleOlderMessages").innerText =
+            showOlderMessages ? "Hide Older Messages" : "Show Older Messages";
+          updateTextsDisplay(); // Update the display accordingly
         });
-      });
 
       // Call fetchTexts on page load to display existing texts
       window.onload = fetchTexts;
