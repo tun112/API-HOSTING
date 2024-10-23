@@ -14,6 +14,7 @@ app.get('/', (req, res) => {
 
 // API endpoint that responds to /api/hello
 app.get('/api/hello', (req, res) => {
+    console.log('Received request for /api/hello'); // Debug line
     res.json({ message: 'Hello from the server!' }); // This will respond with a JSON object
 });
 
