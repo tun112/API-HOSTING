@@ -3,30 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Client-Server Interaction</title>
+    <title>Simple API Client</title>
   </head>
   <body>
-    <h1>Click the button to communicate with the server</h1>
+    <h1>Simple API Interaction</h1>
     <button id="sendMessage">Send Message to Server</button>
-    <p id="response"></p>
+    <div id="response"></div>
 
     <script>
       document.getElementById("sendMessage").addEventListener("click", () => {
-        // Send a POST request to the server when the button is clicked
-        fetch("https://your-api-name.onrender.com/api/send-message", {
-          method: "POST", // Use POST for sending data to the server
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ message: "Hello from the client!" }), // Send some data to the server
-        })
-          .then((response) => response.json())
+        // Update this URL with your server's URL
+        fetch("http://localhost:10000/api/hello") // Change this for Render deployment
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(
+                "Network response was not ok " + response.statusText
+              );
+            }
+            return response.text();
+          })
           .then((data) => {
-            // Display the server's response
-            document.getElementById("response").innerText = data.response;
+            document.getElementById("response").innerText = data; // Display server response
           })
           .catch((error) => {
-            console.error("Error:", error);
+            console.error("Error:", error); // Log any errors
           });
       });
     </script>

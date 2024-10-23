@@ -1,30 +1,15 @@
 const express = require('express');
-const path = require('path');
+const cors = require('cors'); // Include cors
 const app = express();
+const port = 10000;
 
-// Middleware to parse JSON data
-app.use(express.json());
+// Use cors middleware
+app.use(cors());
 
-// Serve static files (your client HTML)
-app.use(express.static(path.join(__dirname, 'public')));
-
-const PORT = process.env.PORT || 10000;
-
-// Root Route - Serve the HTML file
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/api/hello', (req, res) => {
+    res.send('Hello, this is your server responding!');
 });
 
-// API Route to handle client messages
-app.post('/api/send-message', (req, res) => {
-  const clientMessage = req.body.message; // Access the message sent from the client
-  console.log('Message from the client:', clientMessage);
-
-  // Respond back to the client with a message
-  res.json({ response: 'Message received: ' + clientMessage });
-});
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
