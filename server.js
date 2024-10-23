@@ -4,18 +4,17 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors()); // Enable CORS for all origins
+app.use(express.json()); // Enable JSON parsing for incoming requests
 
-// Define a route for the root URL
+// Root endpoint
 app.get('/', (req, res) => {
-    res.send('Welcome to the API!'); // This will respond to GET requests at the root URL
+    res.send('Welcome to the API!');
 });
 
-// Define a route for your specific API endpoint
+// API endpoint that responds to /api/hello
 app.get('/api/hello', (req, res) => {
-    res.json({ message: 'Hello from the server!' });
+    res.json({ message: 'Hello from the server!' }); // This will respond with a JSON object
 });
 
 // Start the server

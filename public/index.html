@@ -18,10 +18,17 @@
             const response = await fetch(
               "https://your-api-name.onrender.com/api/hello"
             ); // Replace with your actual API URL
+            if (!response.ok) {
+              throw new Error(
+                "Network response was not ok " + response.statusText
+              );
+            }
             const data = await response.json();
             document.getElementById("response").innerText = data.message; // Display the response message
           } catch (error) {
             console.error("Error fetching the message:", error);
+            document.getElementById("response").innerText =
+              "Error fetching the message";
           }
         });
     </script>
