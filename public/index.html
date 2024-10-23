@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client-Server Interaction</title>
+  </head>
+  <body>
+    <h1>Click the button to communicate with the server</h1>
+    <button id="sendMessage">Send Message to Server</button>
+    <p id="response"></p>
+
+    <script>
+      document.getElementById("sendMessage").addEventListener("click", () => {
+        // Send a POST request to the server when the button is clicked
+        fetch("https://your-api-name.onrender.com/api/send-message", {
+          method: "POST", // Use POST for sending data to the server
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: "Hello from the client!" }), // Send some data to the server
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Display the server's response
+            document.getElementById("response").innerText = data.response;
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      });
+    </script>
+  </body>
+</html>
